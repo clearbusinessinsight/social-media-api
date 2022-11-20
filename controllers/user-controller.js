@@ -33,15 +33,100 @@ const userController = {
             });
     },
     
-
     // Post a new user
-
+    createUser(req, res) {
+        User.create(req.body)
+            .then((dbUserData) => {
+                res.json(dbUserData);
+            })
+            .catch((err) => {
+                console.log(err);
+                res.status(500).json(err);
+            });
+    },
+    
     // Put (Update) a user
-
+    updateUser(req, res) {
+        User.findOneAndUpdate(
+            { _id: req.params.userId },
+            {
+                $set: req.body,
+            },
+            {
+                runValidators: true,
+                new: true,
+            }
+        )
+            .then((dbUserData) => {
+                if (!dbUserData) {
+                    return res.status(404).json({ message: "No user with this id!" });
+                }
+                res.json(dbUserData);
+            })
+            .catch((err) => {
+                console.log(err);
+                res.status(500).json(err);
+            });
+    },
+    
     //  Delete a user  Then as a bosus delete anything associated with that user
-
+    deleteUser(req, res) {
+        User.findOneAndDelete({ _id: req.params.userId })
+            .then((dbUserData) => {
+                if (!dbUserData) {
+                    return res.status(404).json({ message: "No user with this id!" });
+                }
+                
+        // Get ids of user's thoughts and delete them as well
+                return Thought.deleteMany({ _id: { $in: dbUserData.thoughts } });
+            })
+            .then(() => {
+                res.json({ message: "User and associated thoughts deleted!" });
+            })
+            .catch((err) => {
+                console.log(err);
+                res.status(500).json(err);
+            });
+    },
+    
     // Post (add) a friend to a friend list
-
+    addFriend(req, res) {
+        User.findOneAndUpdate(
+            { _id: req.params.userId },
+            { $addToSet: { friends: req.params.friendId } },
+            { new: true }
+        )
+            .then((dbUserData) => {
+                if (!dbUserData) {
+                    return res.status(404).json({ message: "No user with this id!" });
+                }
+                res.json(dbUserData);
+            })
+            .catch((err) => {
+                console.log(err);
+                res.status(500).json(err);
+            });
+    },
+    
     // Delete a friend from the friend list
-
+    removeFriend(req, res) {
+        User.findOneAndUpdate(
+            { _id: req.params.userId },
+            { $pull: { friends: req.params.friendId } },
+            { new: true }
+        )
+            .then((dbUserData) => {
+                if (!dbUserData) {
+                    return res.status(404).json({ message: "No user with this id!" });
+                }
+                res.json(dbUserData);
+            })
+            .catch((err) => {
+                console.log(err);
+                res.status(500).json(err);
+            });
+    },
 };
+    
+
+module.exports = userController;
