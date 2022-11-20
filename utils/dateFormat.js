@@ -1,0 +1,1 @@
+// format the timestamps that will be added to every record
