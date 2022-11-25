@@ -34,17 +34,48 @@ const userController = {
     },
     
     // Post a new user
+      
     createUser(req, res) {
-        User.create(req.body)
-            .then((dbUserData) => {
-                res.json(dbUserData);
+        User.findOne({
+            $or: [{
+                email: req.body.email
+            }, {
+                username: req.body.username
+                }]
+        }).then(user => {
+            if (user) {
+                let errors = {};
+                if (user.username === req.body.username) {
+                    errors.username = "User Name already exists!";
+                }
+                else {
+                    if (user.email === req.body.email) {
+                        errors.email = "Email already exist!";
+                    }
+                    return res.status(400).json(errors);
+                }
+                return res.status(400).json(errors);
+            } else {
+                User.create(req.body)
+                                        
+                        .then((dbUserData) => {
+                            res.json(dbUserData);
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                            res.status(600).json(err);
+                        });
+                }
             })
-            .catch((err) => {
-                console.log(err);
-                res.status(500).json(err);
+            .catch(err => {
+                return res.status(500).json({
+                    error: err
+                });
             });
+        
     },
-    
+
+
     // Put (Update) a user
     updateUser(req, res) {
         User.findOneAndUpdate(
